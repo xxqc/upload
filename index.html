@@ -1,0 +1,119 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>演示：jQuery+php实现ajax文件上传</title>
+
+    <style type="text/css">
+        .demo{width:580px; margin:30px auto}
+        .btn{position: relative;overflow: hidden;margin-right: 4px;}
+        .btn input {position: absolute;top: 0; right: 0;margin: 0;border: solid transparent;opacity: 0;filter:alpha(opacity=0);}
+        .progress { position:relative; margin-left:100px; margin-top:-24px; width:200px; border-radius:3px; display:none}
+        .percent { position:absolute; top:1px; left:2%; color:#fff }
+        .files{margin:10px 0}
+        .delimg{margin-left:20px; color:#090; cursor:pointer;margin-top: -6px;}
+    </style>
+    <!--jquery1.8.1-->
+    <script src="http://code.jquery.com/jquery-1.8.1.min.js"></script>
+    <!--图片jquery.form.js-->
+    <script type="text/javascript" src="https://www.helloweba.net/demo/upload/jquery.form.js"></script>
+    <!--bootstrap.css3.3.7-->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+</head>
+
+<body>
+
+
+<div id="main">
+    <div class="demo">
+        <div class="btn btn-success">
+            <span>上传图片</span>
+            <input id="fileupload" type="file" name="mypic">
+        </div>
+        <!--加载进度-->
+        <div class="progress progress-striped">
+            <span class="progress-bar progress-bar-success bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style=""></span>
+            <span class="percent">0%</span >
+        </div>
+        <!--显示图片-->
+        <div id="showimg"></div>
+        <!--删除图片-->
+        <div class="files"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(function () {
+        //进度条百分比加载颜色
+        var bar = $('.bar');
+        //进度条百分比
+        var percent = $('.percent');
+        //图片显示
+        var showimg = $('#showimg');
+        //进度条
+        var progress = $(".progress");
+        //新增
+        var files = $(".files");
+        var btn = $(".btn span");
+        $(".demo").wrap("<form id='myupload' action='action.php' method='post' enctype='multipart/form-data'></form>");
+        //点击上传图片
+        $("#fileupload").change(function(){
+            //提交表单
+            $("#myupload").ajaxSubmit({
+                dataType:  'json',
+                beforeSend: function() {
+
+                    //显示进度条
+                    progress.show();
+                    //进度条为0
+                    var percentVal = '0%';
+                    bar.width(percentVal);
+                    percent.html(percentVal);
+                    btn.html("上传中...");
+                },
+                //上传进度
+                uploadProgress: function(event, position, total, percentComplete) {
+                    //进度条加载长度数据是number型
+                    var percentVal = percentComplete + '%';
+                    bar.width(percentVal)
+                    percent.html(percentVal);
+                },
+                success: function(data) {
+                    //上传成功返回参数
+                    files.html("<b>"+data.name+"("+data.size+"k)</b> <span class='delimg btn btn-danger' rel='"+data.pic+"'>删除</span>");
+                    showimg.html("<img src='"+data.pic+"'>");
+                    btn.html("上传图片");
+                },
+                error:function(xhr){
+                    //上传失败
+                    btn.html("上传失败");
+                    bar.width('0')
+                    files.html(xhr.responseText);
+                },
+                clearForm: true
+            });
+        });
+
+        //删除图片js
+        $(".delimg").live('click',function(){
+            //获取图片地址
+            var pic = $(this).attr("rel");
+            $.post("action.php?act=delimg",{imagename:pic},function(msg){
+                if(msg=='delete'){
+                    files.html("删除成功.");
+                    //删除图片效果
+                    showimg.empty();
+                    //隐藏进度条
+                    progress.hide();
+                }else{
+                    alert(msg);
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
